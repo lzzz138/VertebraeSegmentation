@@ -76,10 +76,6 @@ class SpineDataset(Dataset):
 
 if __name__ == '__main__':
     train_dataset = SpineDataset(root=root, status='train', transform=trans)
-    for i,path in enumerate(train_dataset.data_paths):
-        print(path)
-        if i>100:
-            break
     train_dataloader = DataLoader(train_dataset, batch_size=4, shuffle=True)
 
     data_iter = iter(train_dataloader)
