@@ -4,9 +4,9 @@ import nibabel as nib
 import numpy as np
 
 # 设置输入和输出文件夹
-input_image_dir = 'spineCT/rawdata'  # 输入图像文件夹
-input_label_dir = 'spineCT/mask'  # 输入标签文件夹
-output_dir = 'spineCT/spineCT'  # 输出切片保存文件夹
+input_image_dir = '../spineCT/rawdata'  # 输入图像文件夹
+input_label_dir = '../spineCT/mask'  # 输入标签文件夹
+output_dir = '../spineCT/spineCT'  # 输出切片保存文件夹
 
 
 # 调窗操作
