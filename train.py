@@ -12,6 +12,7 @@ from PIL import Image
 from tqdm import tqdm
 import os
 import numpy as np
+import albumentations as A
 
 def set_seed(seed):
     random.seed(seed)  # 设置Python的随机种子
@@ -95,3 +96,56 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, scheduler
             torch.save(model.state_dict(), os.path.join(save_dir, 'best.pth'))
             tqdm.write(f"Best model saved with Dice {best_dice:.4f}")
         time.sleep(0.5)
+
+
+
+if __name__ == '__main__':
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+    #设置随机种子
+    seed = 3407
+    set_seed(seed)
+    print(f'Random Seed: {seed}')
+
+    root = 'spineCT/spineCT'
+
+    label_mapping = {
+        0: 0,  # 背景
+        128: 1,  # 锥体
+        255: 2  # 椎弓
+    }
+    inverse_mapping = {v: k for k, v in label_mapping.items()}
+
+    transform = A.Compose([
+        A.VerticalFlip(p=0.5),  # 垂直旋转
+        A.HorizontalFlip(p=0.5),  # 水平旋转
+        A.RandomBrightnessContrast(p=0.2),  # 随机明亮对比度
+        # A.Resize(height=256,width=256,interpolation=cv2.INTER_NEAREST)
+    ])
+
+    # 加载训练集和验证集
+    train_dataset = SpineDataset(root=root, status='train',transform=transform)
+    val_dataset = SpineDataset(root=root, status='val')
+    print(f'Trainset size: {len(train_dataset)}')
+    print(f'Validationset size: {len(val_dataset)}')
+
+    train_loader = DataLoader(train_dataset, batch_size=1, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=1, shuffle=True)
+
+    # 创建模型
+    model = UNet(input_channels=3, num_classes=3)
+    model = model.to(device)
+
+    # 损失函数和优化器
+    criterion = CombinedLoss()
+    optimizer = optim.Adam(model.parameters(), lr=1e-3)
+
+    # StepLR：每 10 个 epoch 衰减学习率
+    scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+
+    # 设置训练轮次
+    num_epochs = 15
+
+    #训练模型
+    train_model(model, train_loader, val_loader, criterion, optimizer, scheduler, device, num_epochs, save_dir='./models')
+
